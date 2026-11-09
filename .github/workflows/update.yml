@@ -1,5 +1,7 @@
 name: update-prices
 
+# El robot lee los precios cada 15 minutos durante unas 5 h 40 min y después se
+# vuelve a lanzar él mismo. La programación (cron) queda como respaldo.
 on:
   schedule:
     - cron: "*/15 * * * *"
@@ -12,6 +14,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: update-prices
@@ -20,23 +23,29 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Read prices
-        run: node scripts/update.mjs
-      - name: Save changes
+      - name: Read prices every 15 minutes
         run: |
           git config user.name "mesa-fc27 bot"
           git config user.email "actions@users.noreply.github.com"
-          git add docs
-          if git diff --cached --quiet; then
-            echo "No changes"
-          else
-            git commit -m "Update prices"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
+          END=$(( $(date +%s) + 5*3600 + 40*60 ))
+          while true; do
+            node scripts/update.mjs || echo "Lectura fallida, se conserva el dato anterior"
+            git add docs
+            if ! git diff --cached --quiet; then
+              git commit -q -m "Update prices"
+              git pull -q --rebase origin main && git push -q origin HEAD:main || echo "Subida fallida, se reintenta en la próxima lectura"
+            fi
+            if [ $(( $(date +%s) + 900 )) -gt "$END" ]; then break; fi
+            sleep 900
+          done
+      - name: Launch the next round
+        if: always()
+        run: gh workflow run update.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
