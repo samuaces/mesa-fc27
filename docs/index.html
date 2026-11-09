@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mesa FC 27</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna, tres pasos (monedas, tipo, plan). Los precios llegan solos desde data.json. */
+:root{
+  --bg:#EEF1EC; --surface:#F8FAF6; --fg:#12231C; --muted:#56675E; --line:#CBD5CC;
+  --buy:#0B7A5E; --sell:#B03A25; --wait:#7D5F00; --accent:#0B5D48; --on-accent:#F3F8F4;
+  --display:'Barlow Condensed','Arial Narrow',sans-serif;
+  --body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1511; --surface:#14211B; --fg:#E4EDE6; --muted:#93A59A; --line:#26382F;
+    --buy:#4FD1A5; --sell:#F0866F; --wait:#E6C24A; --accent:#3CBF94; --on-accent:#06130E;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--fg); font:16px/1.5 var(--body);
+  padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(56px + env(safe-area-inset-bottom,0px));
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:680px;margin:0 auto;display:grid;gap:34px}
+.wrap>*{min-width:0}
+h1,h2{font-family:var(--display);text-transform:uppercase;margin:0;text-wrap:balance}
+h1{font-size:46px;line-height:1;letter-spacing:.02em;font-weight:700}
+h2{font-size:24px;letter-spacing:.06em;font-weight:700;display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+h2 .n{color:var(--accent)}
+.sub{color:var(--muted);font-size:14px;margin:6px 0 0}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+input[type=text]{
+  width:100%;font:500 22px var(--mono);color:var(--fg);background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:14px;font-variant-numeric:tabular-nums
+}
+input.small{font-size:16px;padding:9px 10px;width:130px}
+input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg button{
+  font:700 20px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:14px 6px;
+  border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;cursor:pointer
+}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.tag{
+  display:inline-block;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.09em;
+  text-transform:uppercase;padding:1px 9px;border:1.5px solid currentColor;border-radius:3px;line-height:1.5;white-space:nowrap
+}
+.tag.buy{color:var(--buy)} .tag.sell{color:var(--sell)} .tag.wait{color:var(--wait)} .tag.mute{color:var(--muted)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:grid;gap:8px}
+.box .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.line{padding:18px 0;border-top:1px solid var(--line);display:grid;gap:10px}
+.line:last-of-type{border-bottom:1px solid var(--line)}
+.line .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.line .nm{font-weight:600;font-size:18px}
+.how{color:var(--muted);font-size:14px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stats div{min-width:0}
+.stats span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.stats b{font-family:var(--mono);font-weight:500;font-size:19px;font-variant-numeric:tabular-nums}
+.when{margin:0;font-size:15px}
+.when em{font-style:normal;color:var(--muted)}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.steps div{border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--bg)}
+.steps span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.steps b{font-family:var(--mono);font-weight:500;font-size:17px}
+.check{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.check label{color:var(--muted)}
+.res-line{padding:16px 0;border-top:1px solid var(--line);display:grid;gap:4px}
+.sum{display:flex;gap:26px;flex-wrap:wrap;margin-top:20px}
+.sum div b{display:block;font-family:var(--mono);font-size:22px;font-weight:500}
+.sum div span{font-size:12px;color:var(--muted)}
+.cmp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.cmp>div{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:14px}
+.cmp b{display:block;font-family:var(--display);font-size:20px;letter-spacing:.05em;text-transform:uppercase;margin:6px 0 2px}
+.cmp p{margin:0;color:var(--muted);font-size:14px}
+.fine{font-size:13px;color:var(--muted);margin:12px 0 0}
+.foot{font-size:13px;color:var(--muted)}
+.foot a{color:var(--fg)}
+.pos{color:var(--buy)} .neg{color:var(--sell)}
+.empty{border:1px dashed var(--line);border-radius:8px;padding:18px;color:var(--muted)}
+.hours{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;margin-top:12px;align-items:end;height:64px}
+.hours i{display:block;background:var(--muted);opacity:.55;border-radius:2px 2px 0 0;min-height:3px}
+.hours i.lo{background:var(--buy);opacity:1} .hours i.hi{background:var(--sell);opacity:1}
+.hl{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono)}
+@media (max-width:440px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .steps{grid-template-columns:1fr} .cmp{grid-template-columns:1fr} h1{font-size:40px} }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Mesa FC 27</h1>
+  <p class="sub" id="clock"></p>
+</header>
+
+<section aria-labelledby="hm">
+  <h2 id="hm">Mercado ahora</h2>
+  <div class="box" id="market"><div class="empty">Cargando precios…</div></div>
+</section>
+
+<section aria-labelledby="h1s">
+  <h2 id="h1s"><span class="n">1</span>¿Cuántas monedas tienes?</h2>
+  <label for="coins" style="position:absolute;left:-9999px">Monedas</label>
+  <input type="text" id="coins" inputmode="numeric" autocomplete="off" placeholder="Por ejemplo, 100.000">
+</section>
+
+<section aria-labelledby="h2s">
+  <h2 id="h2s"><span class="n">2</span>¿Qué tipo de tradeo quieres?</h2>
+  <div class="seg" id="tipo" role="group" aria-labelledby="h2s">
+    <button type="button" data-t="suave">Suave</button>
+    <button type="button" data-t="normal">Normal</button>
+    <button type="button" data-t="agresivo">Agresivo</button>
+  </div>
+  <p class="sub" id="tipo-desc"></p>
+</section>
+
+<section aria-labelledby="h3s">
+  <h2 id="h3s"><span class="n">3</span>Tu plan</h2>
+  <div id="plan"></div>
+</section>
+
+<section aria-labelledby="h5s">
+  <h2 id="h5s">Mañana barata, tarde cara</h2>
+  <div id="hourbox"></div>
+</section>
+
+<section class="foot" aria-labelledby="h6s">
+  <h2 id="h6s">De dónde salen los datos</h2>
+  <p>Un robot lee los precios de consola en <a href="https://nokafut.com/en/fc27/cheapest/" target="_blank" rel="noopener">NokaFut</a> cada 15 minutos y esta página se rehace sola con ellos. Los nombres de las cartas vienen como los muestra NokaFut. Comprueba siempre el precio real en el mercado antes de pujar. Nada de esto garantiza beneficio.</p>
+</section>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var TZ='Europe/Madrid';
+  var TYPES={
+    suave:{t:5,desc:'Objetivo de beneficio neto del 5% por carta. Solo fodder barato (84 a 86) y mucha reserva.',a:{84:35,85:25,86:15}},
+    normal:{t:8,desc:'Objetivo del 8% neto por carta. Fodder de 84 a 87 y reserva para aprovechar caídas.',a:{84:20,85:20,86:20,87:15}},
+    agresivo:{t:12,desc:'Objetivo del 12% neto por carta. Fodder más caro (86 a 89). Más riesgo de quedarte con cartas sin vender.',a:{85:10,86:15,87:20,88:20,89:15}}
+  };
+  var state={coins:100000,type:'normal',seen:{}};
+  var KEY='mesa-fc27-web-v1';
+  try{var raw=localStorage.getItem(KEY);if(raw){var s=JSON.parse(raw);if(s&&typeof s==='object'){for(var k in s){state[k]=s[k];}}}}catch(e){}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+  var DATA=null,HIST=null,FAILED=false;
+
+  function $(id){return document.getElementById(id);}
+  function fmt(n){var neg=n<0;var s=String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (neg?'−':'')+s;}
+  function num(v){var n=Number(String(v).replace(/[^\d]/g,''));return isFinite(n)?n:0;}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function step(p){return p<1000?50:p<10000?100:p<50000?250:p<100000?500:1000;}
+  function up(p){var s=step(p);return Math.ceil(p/s)*s;}
+  var F1=new Intl.DateTimeFormat('es-ES',{timeZone:TZ,weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+  var FP=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',hourCycle:'h23'});
+  function parts(d){var o={};FP.formatToParts(d).forEach(function(p){o[p.type]=p.value;});return {date:o.year+'-'+o.month+'-'+o.day,hour:parseInt(o.hour,10)};}
+  function nextUTC(dow,h,m,now){
+    var d=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),h,m));
+    d.setUTCDate(d.getUTCDate()+((dow-d.getUTCDay()+7)%7));
+    if(d<=now)d.setUTCDate(d.getUTCDate()+7);
+    return d;
+  }
+
+  /* ---------- horas baratas / caras con el historial real ---------- */
+  function hourStats(){
+    if(!HIST||!HIST.points||HIST.points.length<20)return null;
+    var sums={},dates={};
+    HIST.points.forEach(function(pt){
+      var pp=parts(new Date(pt.t));dates[pp.date]=1;
+      for(var r in pt.p){var key=r+'|'+pp.date;(sums[key]=sums[key]||{s:0,n:0});sums[key].s+=pt.p[r];sums[key].n++;}
+    });
+    var hours=[];for(var h=0;h<24;h++)hours.push({h:h,s:0,n:0});
+    HIST.points.forEach(function(pt){
+      var pp=parts(new Date(pt.t));
+      for(var r in pt.p){var m=sums[r+'|'+pp.date];if(m.n<6)continue;hours[pp.hour].s+=pt.p[r]/(m.s/m.n);hours[pp.hour].n++;}
+    });
+    var out=hours.map(function(x){return {h:x.h,v:x.n>=4?(x.s/x.n-1)*100:null,n:x.n};});
+    var have=out.filter(function(x){return x.v!==null;});
+    return {days:Object.keys(dates).length,hours:out,have:have.length};
+  }
+  function renderHours(){
+    var box=$('hourbox'),hs=hourStats(),h='';
+    if(hs&&hs.days>=3&&hs.have>=16){
+      var ok=hs.hours.filter(function(x){return x.v!==null;}).sort(function(a,b){return a.v-b.v;});
+      var lo=ok.slice(0,3).map(function(x){return x.h;}),hi=ok.slice(-3).map(function(x){return x.h;});
+      var min=ok[0],max=ok[ok.length-1];
+      function hh(n){return (n<10?'0':'')+n+':00';}
+      h+='<div class="cmp"><div><span class="tag buy">Comprar</span><b>Sobre las '+hh(min.h)+'</b><p>Es la hora más barata en tus datos: un '+Math.abs(min.v).toFixed(1).replace('.',',')+'% por debajo de la media del día.</p></div>'+
+         '<div><span class="tag sell">Vender</span><b>Sobre las '+hh(max.h)+'</b><p>Es la hora más cara: un '+max.v.toFixed(1).replace('.',',')+'% por encima de la media del día.</p></div></div>';
+      var rng=Math.max(Math.abs(min.v),Math.abs(max.v),0.5);
+      h+='<div class="hours" aria-hidden="true">';
+      for(var i=0;i<24;i+=2){
+        var a=hs.hours[i],b=hs.hours[i+1],vv=[a.v,b.v].filter(function(x){return x!==null;});
+        var v=vv.length?vv.reduce(function(p,c){return p+c;},0)/vv.length:0;
+        var cls=(lo.indexOf(i)>-1||lo.indexOf(i+1)>-1)?'lo':((hi.indexOf(i)>-1||hi.indexOf(i+1)>-1)?'hi':'');
+        h+='<i class="'+cls+'" style="height:'+Math.round(10+((v+rng)/(2*rng))*90)+'%"></i>';
+      }
+      h+='</div><div class="hl" aria-hidden="true">';
+      for(var j=0;j<24;j+=2)h+='<span>'+j+'</span>';
+      h+='</div><p class="fine">Calculado con '+hs.days+' días de lecturas de este mismo robot (hora de Madrid). Las barras comparan cada franja con la media del día.</p>';
+    }else{
+      h+='<div class="cmp"><div><span class="tag buy">Comprar</span><b>Madrugada y hasta las 10:00</b><p>Hay menos gente pujando. El jueves a las 07:59 llegan las recompensas de Rivals.</p></div>'+
+         '<div><span class="tag sell">Vender</span><b>De 20:00 a 23:00</b><p>Es la hora con más jugadores y las pujas suben. Lista aquí lo que quieras vender, sobre todo el viernes.</p></div></div>'+
+         '<p class="fine">Esto es una regla general de una guía de FC 26. El robot está guardando lecturas'+(hs?' ('+hs.days+' de 3 días)':'')+' y cuando tenga 3 días aquí aparecerán las horas reales de este mercado.</p>';
+    }
+    box.innerHTML=h;
+  }
+
+  /* ---------- mercado ---------- */
+  function renderMarket(){
+    var el=$('market');
+    $('clock').textContent=F1.format(new Date())+' · hora de Madrid';
+    if(!DATA){el.innerHTML=FAILED?'<div class="empty">No se pueden cargar los precios ahora. Vuelve a intentarlo en un minuto.</div>':'<div class="empty">Cargando precios…</div>';return;}
+    var mins=Math.max(0,Math.round((Date.now()-new Date(DATA.updatedAt).getTime())/60000));
+    var old=mins>90;
+    var ago=mins<1?'ahora mismo':(mins<60?'hace '+mins+' min':'hace '+Math.round(mins/60)+' h');
+    var m=DATA.mood||{};
+    var tag=m.score<40?'sell':(m.score>=60?'buy':'wait');
+    var h='<div class="row"><span class="tag '+(old?'wait':'mute')+'">Precios</span><span>'+esc(F1.format(new Date(DATA.updatedAt)))+' · '+ago+'</span></div>';
+    if(old)h+='<div class="row"><span class="tag wait">Aviso</span><span>El robot lleva '+Math.round(mins/60)+' h sin leer. Los precios pueden haber cambiado.</span></div>';
+    if(m.score!=null){
+      var txt=m.score<40?'Mercado a la baja':(m.score>=60?'Mercado al alza':'Mercado estable');
+      h+='<div class="row"><span class="tag '+tag+'">'+esc(m.score)+'/100</span><span>'+txt+': de las cartas de 1.000 monedas o más que se movieron en 24 h, '+esc(m.upPct)+'% subieron ('+fmt(m.up)+' suben, '+fmt(m.down)+' bajan).</span></div>';
+    }
+    var ix=DATA.indices||{},bits=[];
+    [84,85,86].forEach(function(r){if(ix[r]){var c=ix[r].change24h;bits.push(r+': <b class="mono '+(c>0?'pos':(c<0?'neg':''))+'">'+(c>0?'+':(c<0?'−':''))+Math.abs(c).toFixed(1).replace('.',',')+'%</b>');}});
+    if(bits.length)h+='<div>Fodder en 24 h · '+bits.join(' · ')+'</div>';
+    el.innerHTML=h;
+  }
+
+  /* ---------- plan ---------- */
+  function check(key,max){
+    var v=state.seen[key]||0;if(!v)return '';
+    return v<=max?'<span class="tag buy">Compra</span> <span>Dentro de tu máximo.</span>':'<span class="tag wait">Espera</span> <span>Supera tu máximo. No compres a ese precio.</span>';
+  }
+  function build(){
+    var T=TYPES[state.type],coins=state.coins,lines=[],waits=[],used=0,profit=0;
+    var falling=DATA.mood&&DATA.mood.score<40,ix=DATA.indices||{};
+    DATA.tiers.forEach(function(t){
+      var pct=T.a[t.rating];if(!pct)return;
+      var c=t.cards[0],i24=ix[t.rating]?ix[t.rating].change24h:null;
+      if(i24!==null&&i24>5){waits.push({t:t,i24:i24});return;}
+      var staged=falling||(i24!==null&&i24<-3);
+      var bid=up(c.price*1.03),qty=Math.floor(coins*pct/100/bid);
+      if(qty<1)return;
+      var split=staged?[0.4,0.3,0.3]:[1,0,0];
+      var sell=up(bid*(1+T.t/100)/0.95),be=up(bid/0.95),gain=qty*(sell*0.95-bid);
+      var s1=Math.ceil(qty*split[0]),s2=Math.min(qty-s1,Math.ceil(qty*split[1])),s3=qty-s1-s2;
+      used+=qty*bid;profit+=gain;
+      lines.push({key:'r'+t.rating,t:t,c:c,i24:i24,staged:staged,bid:bid,qty:qty,sell:sell,be:be,gain:gain,s:[s1,s2,s3]});
+    });
+    return {lines:lines,waits:waits,used:used,profit:profit,reserve:coins-used,falling:falling};
+  }
+  function renderPlan(){
+    $('tipo-desc').textContent=TYPES[state.type].desc;
+    var btns=$('tipo').querySelectorAll('button');
+    for(var i=0;i<btns.length;i++)btns[i].setAttribute('aria-pressed',btns[i].getAttribute('data-t')===state.type?'true':'false');
+    var box=$('plan');
+    if(!DATA){box.innerHTML='<div class="empty">El plan aparece cuando carguen los precios.</div>';return;}
+    if(state.coins<1000){box.innerHTML='<div class="empty">Escribe tus monedas arriba. Con menos de 1.000 no hay operaciones útiles.</div>';return;}
+    var P=build(),html='';
+    if(P.falling)html+='<div class="box" style="margin-bottom:6px"><div class="row"><span class="tag sell">Mercado a la baja</span><span>No entres con todo hoy. Compra por tramos: una parte ahora y el resto cuando siga bajando o el jueves a las 07:59.</span></div></div>';
+    P.waits.forEach(function(w){
+      html+='<div class="box" style="margin-bottom:6px"><div class="row"><span class="tag wait">Espera</span><span>Las de '+w.t.rating+' han subido un '+w.i24.toFixed(1).replace('.',',')+'% en 24 h. No compres hoy: ese dinero se queda en reserva.</span></div></div>';
+    });
+    if(!P.lines.length){box.innerHTML=html+'<div class="empty">Con este saldo y tipo no sale ninguna compra ahora mismo. Prueba con otro tipo o vuelve más tarde.</div>';return;}
+    P.lines.forEach(function(l){
+      var alt=l.t.cards.slice(1,4).map(function(a){return esc(a.name)+' ('+esc(a.pos)+') '+fmt(a.price);}).join(', ');
+      html+='<div class="line">'+
+        '<div class="top"><span class="tag buy">Comprar</span><span class="nm">'+esc(l.c.name)+'</span><span class="tag mute">'+esc(l.t.rating)+' · '+esc(l.c.pos)+'</span></div>'+
+        '<p class="how">Carta oro común. En el mercado busca "'+esc(l.c.name)+'", calidad Oro, valoración '+esc(l.t.rating)+'. Precio mínimo ahora: '+fmt(l.c.price)+'.'+(alt?' Alternativas: '+alt+'.':'')+'</p>'+
+        '<div class="stats"><div><span>Pujar hasta</span><b>'+fmt(l.bid)+'</b></div><div><span>Unidades</span><b>'+l.qty+'</b></div><div><span>Vender a</span><b>'+fmt(l.sell)+'</b></div></div>'+
+        (l.staged?'<div class="steps"><div><span>Hoy</span><b>'+l.s[0]+'</b></div><div><span>Jueves 07:59</span><b>'+l.s[1]+'</b></div><div><span>Si sigue bajando</span><b>'+l.s[2]+'</b></div></div>':'')+
+        '<p class="when"><em>Cuándo vender:</em> cuando un SBC pida la valoración '+esc(l.t.rating)+' o el viernes de 20:00 a 23:00. Si pasa una semana sin llegar, baja hasta '+fmt(l.be)+' para salir sin pérdida.</p>'+
+        '<p class="when"><em>Si vendes a tu precio:</em> <b class="mono pos">+'+fmt(l.gain)+'</b> tras el 5%.</p>'+
+        '<div class="check"><label for="seen-'+l.key+'">Lo veo a</label><input class="small" type="text" id="seen-'+l.key+'" inputmode="numeric" data-seen="'+l.key+'" data-max="'+l.bid+'" value="'+(state.seen[l.key]?fmt(state.seen[l.key]):'')+'" placeholder="precio"><span id="chk-'+l.key+'">'+check(l.key,l.bid)+'</span></div>'+
+      '</div>';
+    });
+    var thu=nextUTC(4,6,59,new Date());
+    html+='<div class="res-line"><div style="display:flex;gap:10px;align-items:center"><span class="tag wait">Guardar</span><span style="font-weight:600;font-size:18px">Reserva</span><span class="mono" style="margin-left:auto">'+fmt(P.reserve)+'</span></div>'+
+      '<p class="how">No la gastes ya. Próximo tramo de compra: '+esc(F1.format(thu))+' (recompensas de Rivals). Black Friday es el 27 de noviembre, sin confirmar por EA.</p></div>';
+    html+='<div class="sum"><div><b>'+fmt(P.used)+'</b><span>A invertir</span></div><div><b class="pos">+'+fmt(P.profit)+'</b><span>Beneficio si vendes todo a tu precio</span></div></div>';
+    box.innerHTML=html;
+  }
+  function renderAll(){renderMarket();renderPlan();renderHours();}
+
+  $('coins').value=state.coins?fmt(state.coins):'';
+  $('coins').addEventListener('input',function(){state.coins=num(this.value);save();renderPlan();});
+  $('coins').addEventListener('blur',function(){this.value=state.coins?fmt(state.coins):'';});
+  $('tipo').addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;state.type=b.getAttribute('data-t');save();renderPlan();});
+  $('plan').addEventListener('input',function(e){
+    var k=e.target.getAttribute('data-seen');if(k===null)return;
+    state.seen[k]=num(e.target.value);save();
+    var el=$('chk-'+k);if(el)el.innerHTML=check(k,Number(e.target.getAttribute('data-max')));
+  });
+
+  function load(){
+    var q='?v='+Date.now();
+    fetch('data.json'+q,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(d){
+      var changed=!DATA||DATA.updatedAt!==d.updatedAt;DATA=d;FAILED=false;
+      if(changed){renderAll();}else{renderMarket();}
+    }).catch(function(){if(!DATA){FAILED=true;renderMarket();}});
+    fetch('history.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(h){HIST=h;renderHours();}).catch(function(){});
+  }
+  renderAll();load();
+  setInterval(load,120000);
+  setInterval(renderMarket,30000);
+})();
+</script>
+</body>
+</html>
