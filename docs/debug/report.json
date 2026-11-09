@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-09T07:51:44.347Z",
+  "pages": {
+    "nokafut-cheapest": {
+      "status": 200,
+      "bytes": 542188
+    },
+    "nokafut-market": {
+      "status": 200,
+      "bytes": 235949
+    },
+    "fodder-cheapest": {
+      "status": 200,
+      "bytes": 500022
+    }
+  }
+}
