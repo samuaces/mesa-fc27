@@ -1,0 +1,42 @@
+name: update-prices
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - ".github/workflows/update.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-prices
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Read prices
+        run: node scripts/update.mjs
+      - name: Save changes
+        run: |
+          git config user.name "mesa-fc27 bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Update prices"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
