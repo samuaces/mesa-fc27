@@ -93,6 +93,10 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
 .hours i{display:block;background:var(--muted);opacity:.55;border-radius:2px 2px 0 0;min-height:3px}
 .hours i.lo{background:var(--buy);opacity:1} .hours i.hi{background:var(--sell);opacity:1}
 .hl{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:3px;font-size:10px;color:var(--muted);text-align:center;font-family:var(--mono)}
+.li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:12px 0;border-top:1px solid var(--line)}
+.li:last-of-type{border-bottom:1px solid var(--line)}
+.li .p{font-family:var(--mono);text-align:right;white-space:nowrap}
+.li .d{grid-column:1/-1;color:var(--muted);font-size:13px}
 @media (max-width:440px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} .steps{grid-template-columns:1fr} .cmp{grid-template-columns:1fr} h1{font-size:40px} }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
@@ -131,6 +135,12 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
   <div id="plan"></div>
 </section>
 
+<section aria-labelledby="h7s">
+  <h2 id="h7s">Lo que viene</h2>
+  <p class="sub">SBC que caducan y eventos con fecha. Cuando un SBC grande se cierra, la demanda de fodder baja.</p>
+  <div id="upcoming" style="margin-top:10px"></div>
+</section>
+
 <section aria-labelledby="h5s">
   <h2 id="h5s">Mañana barata, tarde cara</h2>
   <div id="hourbox"></div>
@@ -156,7 +166,7 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
   var KEY='mesa-fc27-web-v1';
   try{var raw=localStorage.getItem(KEY);if(raw){var s=JSON.parse(raw);if(s&&typeof s==='object'){for(var k in s){state[k]=s[k];}}}}catch(e){}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
-  var DATA=null,HIST=null,FAILED=false;
+  var DATA=null,HIST=null,SBCS=null,EVENTS=null,FAILED=false;
 
   function $(id){return document.getElementById(id);}
   function fmt(n){var neg=n<0;var s=String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (neg?'−':'')+s;}
@@ -172,6 +182,42 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
     d.setUTCDate(d.getUTCDate()+((dow-d.getUTCDay()+7)%7));
     if(d<=now)d.setUTCDate(d.getUTCDate()+7);
     return d;
+  }
+
+  /* ---------- fechas exactas (hora de Madrid) ---------- */
+  var FD=new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'2-digit',hour:'2-digit',hourCycle:'h23'});
+  function mp(t){var o={};FD.formatToParts(new Date(t)).forEach(function(p){o[p.type]=p.value;});return {d:parseInt(o.day,10),h:parseInt(o.hour,10)};}
+  function madridTs(y,mo,d,h,mi){
+    for(var off=1;off<=2;off++){var t=Date.UTC(y,mo-1,d,h-off,mi),q=mp(t);if(q.h===h&&q.d===d)return t;}
+    return Date.UTC(y,mo-1,d,h-1,mi);
+  }
+  function nextMadrid(dow,h,mi,fromTs){
+    var now=fromTs||Date.now(),pp=parts(new Date(now)).date.split('-').map(Number);
+    for(var i=0;i<9;i++){
+      var dt=new Date(Date.UTC(pp[0],pp[1]-1,pp[2]+i));
+      if(dt.getUTCDay()!==dow)continue;
+      var ts=madridTs(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate(),h,mi);
+      if(ts>now)return ts;
+    }
+    return now;
+  }
+  function nextDaily(h,mi){
+    var now=Date.now(),pp=parts(new Date(now)).date.split('-').map(Number);
+    for(var i=0;i<3;i++){
+      var dt=new Date(Date.UTC(pp[0],pp[1]-1,pp[2]+i));
+      var ts=madridTs(dt.getUTCFullYear(),dt.getUTCMonth()+1,dt.getUTCDate(),h,mi);
+      if(ts>now)return ts;
+    }
+    return now;
+  }
+  var FDT=new Intl.DateTimeFormat('es-ES',{timeZone:TZ,weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+  var FDD=new Intl.DateTimeFormat('es-ES',{timeZone:TZ,weekday:'short',day:'numeric',month:'short'});
+  function fdt(ts){return FDT.format(new Date(ts));}
+  function buyStart(){var h=parts(new Date()).hour;return (h>=6&&h<10)?Date.now():nextDaily(6,0);}
+  function sellStart(){
+    var now=Date.now(),fri=nextMadrid(5,20,0,now-3*3600000);
+    var endToday=fri+3*3600000;
+    return (now>=fri&&now<endToday)?now:nextMadrid(5,20,0);
   }
 
   /* ---------- horas baratas / caras con el historial real ---------- */
@@ -277,25 +323,47 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
       html+='<div class="box" style="margin-bottom:6px"><div class="row"><span class="tag wait">Espera</span><span>Las de '+w.t.rating+' han subido un '+w.i24.toFixed(1).replace('.',',')+'% en 24 h. No compres hoy: ese dinero se queda en reserva.</span></div></div>';
     });
     if(!P.lines.length){box.innerHTML=html+'<div class="empty">Con este saldo y tipo no sale ninguna compra ahora mismo. Prueba con otro tipo o vuelve más tarde.</div>';return;}
+    var w1=buyStart(),thuTs=nextMadrid(4,7,59),friTs=sellStart(),sunTs=nextMadrid(0,20,0);
     P.lines.forEach(function(l){
       var alt=l.t.cards.slice(1,4).map(function(a){return esc(a.name)+' ('+esc(a.pos)+') '+fmt(a.price);}).join(', ');
       html+='<div class="line">'+
         '<div class="top"><span class="tag buy">Comprar</span><span class="nm">'+esc(l.c.name)+'</span><span class="tag mute">'+esc(l.t.rating)+' · '+esc(l.c.pos)+'</span></div>'+
         '<p class="how">Carta oro común. En el mercado busca "'+esc(l.c.name)+'", calidad Oro, valoración '+esc(l.t.rating)+'. Precio mínimo ahora: '+fmt(l.c.price)+'.'+(alt?' Alternativas: '+alt+'.':'')+'</p>'+
         '<div class="stats"><div><span>Pujar hasta</span><b>'+fmt(l.bid)+'</b></div><div><span>Unidades</span><b>'+l.qty+'</b></div><div><span>Vender a</span><b>'+fmt(l.sell)+'</b></div></div>'+
-        (l.staged?'<div class="steps"><div><span>Hoy</span><b>'+l.s[0]+'</b></div><div><span>Jueves 07:59</span><b>'+l.s[1]+'</b></div><div><span>Si sigue bajando</span><b>'+l.s[2]+'</b></div></div>':'')+
-        '<p class="when"><em>Cuándo vender:</em> cuando un SBC pida la valoración '+esc(l.t.rating)+' o el viernes de 20:00 a 23:00. Si pasa una semana sin llegar, baja hasta '+fmt(l.be)+' para salir sin pérdida.</p>'+
+        (l.staged?'<div class="steps"><div><span>Tramo 1 · '+esc(fdt(w1))+'</span><b>'+l.s[0]+' uds</b></div><div><span>Tramo 2 · '+esc(fdt(thuTs))+'</span><b>'+l.s[1]+' uds</b></div><div><span>Tramo 3 · si baja otro 5%</span><b>'+l.s[2]+' uds</b></div></div>':'<p class="when"><em>Comprar:</em> '+esc(fdt(w1))+(w1-Date.now()<60000?' (ahora estás en horario barato)':' (franja barata, hasta las 10:00)')+'.</p>')+
+        '<p class="when"><em>Vender a '+fmt(l.sell)+':</em> '+esc(fdt(friTs))+(friTs-Date.now()<60000?' (ahora, hasta las 23:00)':', hasta las 23:00')+'. Si sale un SBC que pida la valoración '+esc(l.t.rating)+', vende en cuanto suba.</p>'+
+        '<p class="when"><em>Si no llega:</em> el '+esc(fdt(sunTs))+' baja a '+fmt(l.be)+' para salir sin pérdida.</p>'+
         '<p class="when"><em>Si vendes a tu precio:</em> <b class="mono pos">+'+fmt(l.gain)+'</b> tras el 5%.</p>'+
         '<div class="check"><label for="seen-'+l.key+'">Lo veo a</label><input class="small" type="text" id="seen-'+l.key+'" inputmode="numeric" data-seen="'+l.key+'" data-max="'+l.bid+'" value="'+(state.seen[l.key]?fmt(state.seen[l.key]):'')+'" placeholder="precio"><span id="chk-'+l.key+'">'+check(l.key,l.bid)+'</span></div>'+
       '</div>';
     });
-    var thu=nextUTC(4,6,59,new Date());
+    var thu=new Date(thuTs);
     html+='<div class="res-line"><div style="display:flex;gap:10px;align-items:center"><span class="tag wait">Guardar</span><span style="font-weight:600;font-size:18px">Reserva</span><span class="mono" style="margin-left:auto">'+fmt(P.reserve)+'</span></div>'+
-      '<p class="how">No la gastes ya. Próximo tramo de compra: '+esc(F1.format(thu))+' (recompensas de Rivals). Black Friday es el 27 de noviembre, sin confirmar por EA.</p></div>';
+      '<p class="how">No la gastes ya. Próximo tramo fuerte de compra: '+esc(fdt(thuTs))+' (recompensas de Rivals). Black Friday es el 27 de noviembre, sin confirmar por EA.</p></div>';
     html+='<div class="sum"><div><b>'+fmt(P.used)+'</b><span>A invertir</span></div><div><b class="pos">+'+fmt(P.profit)+'</b><span>Beneficio si vendes todo a tu precio</span></div></div>';
     box.innerHTML=html;
   }
-  function renderAll(){renderMarket();renderPlan();renderHours();}
+  function renderUpcoming(){
+    var box=$('upcoming'),rows=[],today=parts(new Date()).date;
+    if(SBCS&&SBCS.sbcs)SBCS.sbcs.forEach(function(x){
+      if(x.expires<today||rows.length>60)return;
+      var big=(x.coins||0)>=20000||x.tradeable;
+      rows.push({date:x.expires,time:'',big:big,title:x.name,tag:'Caduca SBC',
+        right:x.coins?fmt(x.coins):'',
+        note:(x.reward?'Recompensa '+x.reward+(x.tradeable?', intercambiable':', no intercambiable'):'Sin recompensa de carta')+(x.challenges>1?' · '+x.challenges+' desafíos':'')+(x.score?' · '+fmt(x.score)+' de puntuación':'')});
+    });
+    if(EVENTS&&EVENTS.events)EVENTS.events.forEach(function(e){
+      if(e.date<today)return;
+      rows.push({date:e.date,time:e.time||'',big:true,title:e.title,tag:'Evento',right:'',note:e.note+' ('+e.conf+')'});
+    });
+    rows=rows.filter(function(r){return r.big;}).sort(function(a,b){return (a.date+a.time)<(b.date+b.time)?-1:1;}).slice(0,10);
+    if(!rows.length){box.innerHTML='<div class="empty">Todavía no hay SBC ni eventos cargados.</div>';return;}
+    box.innerHTML=rows.map(function(r){
+      var dt=new Date(r.date+'T12:00:00Z');
+      return '<div class="li"><span><b>'+esc(r.title)+'</b> <span class="tag mute">'+esc(r.tag)+'</span></span><span class="p">'+esc(FDD.format(dt).replace('.',''))+(r.time?' · '+esc(r.time):'')+'</span><span class="d">'+esc(r.note)+(r.right?' · Coste '+r.right+' monedas':'')+'</span></div>';
+    }).join('')+'<p class="fine">Los SBC vienen de FUTWIZ y solo traen la fecha de caducidad, sin hora. Los objetivos no se leen. EA anuncia los SBC nuevos horas antes de salir, así que no se pueden predecir.</p>';
+  }
+  function renderAll(){renderMarket();renderPlan();renderHours();renderUpcoming();}
 
   $('coins').value=state.coins?fmt(state.coins):'';
   $('coins').addEventListener('input',function(){state.coins=num(this.value);save();renderPlan();});
@@ -313,6 +381,8 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
       var changed=!DATA||DATA.updatedAt!==d.updatedAt;DATA=d;FAILED=false;
       if(changed){renderAll();}else{renderMarket();}
     }).catch(function(){if(!DATA){FAILED=true;renderMarket();}});
+    fetch('sbcs.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(x){SBCS=x;renderUpcoming();}).catch(function(){});
+    fetch('events.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(x){EVENTS=x;renderUpcoming();}).catch(function(){});
     fetch('history.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(h){HIST=h;renderHours();}).catch(function(){});
   }
   renderAll();load();

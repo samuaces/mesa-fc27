@@ -131,3 +131,46 @@ await writeFile("docs/history.json", JSON.stringify(hist));
 console.log(`OK ${now} · mood ${data.mood.score} · ${data.tiers.length} valoraciones · ${hist.points.length} puntos`);
 for (const t of data.tiers.filter((x) => x.rating >= 83 && x.rating <= 90))
   console.log(t.rating, t.cards.slice(0, 3).map((c) => `${c.name} ${c.pos} ${c.price}`).join(" | "));
+
+// SBC con fecha de caducidad (FUTWIZ). Si falla, no afecta a los precios.
+const MONTHS = { Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06", Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12" };
+function parseSbcs(html) {
+  const out = [];
+  for (const m of html.matchAll(/<a [^>]*href="\/sbcs\/([^"\/]+)\/(\d+)"[^>]*>([\s\S]*?)<\/a>/g)) {
+    const b = m[3];
+    const name = (b.match(/<h3[^>]*>([\s\S]*?)<\/h3>/) || [])[1];
+    const exp = b.match(/<span class="text-xs font-medium">(\d{1,2}) (\w{3}) (\d{4})<\/span>/);
+    if (!name || !exp || !MONTHS[exp[2]]) continue;
+    const coins = b.match(/Cheapest solved cost \(console\)[\s\S]*?<!-- -->([\d,]+)/);
+    const score = b.match(/Required Item Score[\s\S]*?<!-- -->([\d,]+)/);
+    const reward = b.match(/font-bold text-md ml-2">(\d+)</);
+    const chal = b.match(/CHALLENGES<\/div><div class="text-white font-bold">(\d+)</);
+    const cat = b.match(/text-warning font-medium mb-1">([^<]+)</);
+    out.push({
+      id: m[2],
+      name: decode(name.replace(/<[^>]+>/g, "")).trim(),
+      cat: cat ? decode(cat[1]).trim() : "",
+      expires: `${exp[3]}-${MONTHS[exp[2]]}-${exp[1].padStart(2, "0")}`,
+      challenges: chal ? Number(chal[1]) : 1,
+      coins: coins ? toNum(coins[1]) : null,
+      score: score ? toNum(score[1]) : null,
+      reward: reward ? Number(reward[1]) : null,
+      tradeable: !/UNTRADEABLE/.test(b),
+    });
+  }
+  return out;
+}
+try {
+  const html = OFFLINE_DIR ? await readFile(`${OFFLINE_DIR}/futwiz-sbc.html`, "utf8") : await (async () => {
+    const r = await fetch("https://www.futwiz.com/en/fc27/squad-building-challenges", { headers: { "user-agent": UA, "accept-language": "en" } });
+    if (!r.ok) throw new Error(`SBC HTTP ${r.status}`);
+    return r.text();
+  })();
+  const limit = new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString().slice(0, 10);
+  const sbcs = parseSbcs(html).filter((x) => x.expires <= limit).sort((a, b) => (a.expires < b.expires ? -1 : 1));
+  if (sbcs.length < 3) throw new Error("Pocas SBC leídas");
+  await writeFile("docs/sbcs.json", JSON.stringify({ updatedAt: now, source: "https://www.futwiz.com/en/fc27/squad-building-challenges", sbcs }));
+  console.log(`SBC: ${sbcs.length} (primeras: ${sbcs.slice(0, 3).map((x) => x.name + " " + x.expires).join(", ")})`);
+} catch (e) {
+  console.log("SBC no actualizadas:", String(e));
+}
