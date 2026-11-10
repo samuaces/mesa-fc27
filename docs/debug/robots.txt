@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /wp-admin/
+Allow: /wp-admin/admin-ajax.php
+Disallow: /fc27/*?*&
+Disallow: /en/fc27/*?*&
+Disallow: /fr/fc27/*?*&
+Disallow: /pt/fc27/*?*&
+
+Sitemap: https://nokafut.com/sitemap.xml
+Sitemap: https://nokafut.com/fc27/sitemap.xml
+Sitemap: https://nokafut.com/en/fc27/sitemap.xml
+Sitemap: https://nokafut.com/fr/fc27/sitemap.xml
