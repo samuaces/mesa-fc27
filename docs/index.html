@@ -135,6 +135,12 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
   <div id="plan"></div>
 </section>
 
+<section aria-labelledby="hr">
+  <h2 id="hr">Radar de inversión</h2>
+  <p class="sub">Cartas que cotizan muy por debajo de su media de 14 días. Es estadística de vuelta a la media, no una predicción: una carta puede seguir bajando.</p>
+  <div id="radar" style="margin-top:10px"></div>
+</section>
+
 <section aria-labelledby="h7s">
   <h2 id="h7s">Lo que viene</h2>
   <p class="sub">SBC que caducan y eventos con fecha. Cuando un SBC grande se cierra, la demanda de fodder baja.</p>
@@ -166,7 +172,8 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
   var KEY='mesa-fc27-web-v1';
   try{var raw=localStorage.getItem(KEY);if(raw){var s=JSON.parse(raw);if(s&&typeof s==='object'){for(var k in s){state[k]=s[k];}}}}catch(e){}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
-  var DATA=null,HIST=null,SBCS=null,EVENTS=null,FAILED=false;
+  var DATA=null,HIST=null,SBCS=null,EVENTS=null,RADAR=null,FAILED=false;
+  var RP={suave:{share:10,z:-2.2,net:8},normal:{share:20,z:-1.5,net:6},agresivo:{share:40,z:-1.2,net:5}};
 
   function $(id){return document.getElementById(id);}
   function fmt(n){var neg=n<0;var s=String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (neg?'−':'')+s;}
@@ -293,7 +300,7 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
     return v<=max?'<span class="tag buy">Compra</span> <span>Dentro de tu máximo.</span>':'<span class="tag wait">Espera</span> <span>Supera tu máximo. No compres a ese precio.</span>';
   }
   function build(){
-    var T=TYPES[state.type],coins=state.coins,lines=[],waits=[],used=0,profit=0;
+    var T=TYPES[state.type],coins=state.coins-radarPicks().spend,lines=[],waits=[],used=0,profit=0;
     var falling=DATA.mood&&DATA.mood.score<40,ix=DATA.indices||{};
     DATA.tiers.forEach(function(t){
       var pct=T.a[t.rating];if(!pct)return;
@@ -343,6 +350,52 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
     html+='<div class="sum"><div><b>'+fmt(P.used)+'</b><span>A invertir</span></div><div><b class="pos">+'+fmt(P.profit)+'</b><span>Beneficio si vendes todo a tu precio</span></div></div>';
     box.innerHTML=html;
   }
+  function radarPicks(){
+    var out={picks:[],budget:0,spend:0,profit:0,P:RP[state.type]};
+    if(!RADAR||!RADAR.cards||state.coins<1000)return out;
+    var P=out.P,budget=Math.round(state.coins*P.share/100),per=budget/3;
+    out.budget=budget;
+    var cands=RADAR.cards.filter(function(c){return c.z<=P.z&&c.netPct>=P.net&&c.cur>=2000;}).sort(function(a,b){return b.netPct-a.netPct;});
+    var falling=DATA&&DATA.mood&&DATA.mood.score<40;
+    cands.forEach(function(c){
+      if(out.picks.length>=3)return;
+      var qty=Math.floor(per/c.bid);if(qty<1)return;
+      var q1=falling?Math.ceil(qty/2):qty;
+      var gain=qty*(c.target*0.95-c.bid);
+      out.picks.push({c:c,qty:qty,q1:q1,q2:qty-q1,gain:gain});
+      out.spend+=qty*c.bid;out.profit+=gain;
+    });
+    return out;
+  }
+  function renderRadar(){
+    var box=$('radar');
+    if(!RADAR||!RADAR.cards){box.innerHTML='<div class="empty">El radar aparece cuando el robot haya analizado las cartas.</div>';return;}
+    var R=radarPicks(),cards=RADAR.cards,html='';
+    var ageH=Math.round((Date.now()-new Date(RADAR.updatedAt).getTime())/3600000);
+    var low=cards.filter(function(c){return c.z<=-1.5;}).length;
+    html+='<div class="box" style="margin-bottom:6px"><div class="row"><span class="tag '+(low/cards.length>=0.4?'sell':'mute')+'">'+low+' de '+cards.length+'</span><span>cartas de 84 a 91 están muy por debajo de su media. '+(low/cards.length>=0.4?'Es una caída de todo el rango, no de una carta suelta: puede seguir bajando antes de rebotar.':'Las caídas son de cartas concretas.')+'</span></div>'+
+      '<div class="row"><span class="tag '+(ageH>12?'wait':'mute')+'">Análisis</span><span>Hace '+(ageH<1?'menos de 1':ageH)+' h. Se renueva cada 4 horas.</span></div></div>';
+    if(!R.picks.length){
+      html+='<div class="empty">'+(state.coins<1000?'Escribe tus monedas arriba para ver tus compras del radar.':'Con tu perfil ('+state.type+') ninguna carta cumple ahora los requisitos: caída de al menos '+Math.abs(R.P.z).toString().replace('.',',')+' desviaciones y un margen neto de '+R.P.net+'% o más después del 5%. No hay que forzar una compra.')+'</div>';
+    }else{
+      html+='<p class="how" style="margin:8px 0">Presupuesto del radar: <b class="mono">'+fmt(R.budget)+'</b> ('+R.P.share+'% de tus monedas, perfil '+state.type+'). Se reparte entre '+R.picks.length+' cartas como máximo.</p>';
+      var deadline=Date.now()+7*86400000;
+      R.picks.forEach(function(k){
+        var c=k.c;
+        html+='<div class="line"><div class="top"><span class="tag buy">Invertir</span><span class="nm">'+esc(c.name)+'</span><span class="tag mute">'+esc(c.rating)+' · '+esc(c.pos)+'</span><span class="tag wait">Riesgo alto</span></div>'+
+          '<p class="how">Ahora '+fmt(c.cur)+'. Su mediana de 14 días es '+fmt(c.med14)+' ('+(c.dropPct>0?'+':'−')+Math.abs(c.dropPct).toFixed(1).replace('.',',')+'%), y en 52 días ha estado entre '+fmt(c.lo52)+' y '+fmt(c.hi52)+'. Variación habitual: '+c.sigmaPct.toFixed(1).replace('.',',')+'% al día. Busca "'+esc(c.name)+'", calidad Oro, valoración '+esc(c.rating)+'.</p>'+
+          '<div class="stats"><div><span>Pujar hasta</span><b>'+fmt(c.bid)+'</b></div><div><span>Unidades</span><b>'+k.qty+'</b></div><div><span>Vender a</span><b>'+fmt(c.target)+'</b></div></div>'+
+          (k.q2>0?'<div class="steps"><div><span>Tramo 1 · '+esc(fdt(buyStart()))+'</span><b>'+k.q1+' uds</b></div><div><span>Tramo 2 · '+esc(fdt(nextMadrid(4,7,59)))+'</span><b>'+k.q2+' uds</b></div></div>':'<p class="when"><em>Comprar:</em> '+esc(fdt(buyStart()))+'.</p>')+
+          '<p class="when"><em>Vender:</em> en cuanto llegue a '+fmt(c.target)+', mejor a partir de las 20:00. Si pasa una semana ('+esc(fdt(deadline))+') sin llegar, baja a '+fmt(up(c.bid/0.95))+' para salir sin pérdida.</p>'+
+          '<p class="when"><em>Freno:</em> si baja otro 8% por debajo de tu compra, no compres más. No promedies a la baja.</p>'+
+          '<p class="when"><em>Si vendes a tu precio:</em> <b class="mono pos">+'+fmt(k.gain)+'</b> tras el 5%.</p></div>';
+      });
+      html+='<div class="sum"><div><b>'+fmt(R.spend)+'</b><span>A invertir en el radar</span></div><div><b class="pos">+'+fmt(R.profit)+'</b><span>Beneficio si vendes todo a tu precio</span></div></div>';
+    }
+    var avoid=cards.filter(function(c){return c.z>=1.5;}).slice(-3).reverse();
+    if(avoid.length)html+='<p class="fine"><b>Evitar ahora:</b> '+avoid.map(function(c){return esc(c.name)+' '+esc(c.rating)+' (+'+c.dropPct.toFixed(1).replace('.',',')+'% sobre su media)';}).join(', ')+'. Han subido de más.</p>';
+    box.innerHTML=html;
+  }
   function renderUpcoming(){
     var box=$('upcoming'),rows=[],today=parts(new Date()).date;
     if(SBCS&&SBCS.sbcs)SBCS.sbcs.forEach(function(x){
@@ -363,12 +416,12 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
       return '<div class="li"><span><b>'+esc(r.title)+'</b> <span class="tag mute">'+esc(r.tag)+'</span></span><span class="p">'+esc(FDD.format(dt).replace('.',''))+(r.time?' · '+esc(r.time):'')+'</span><span class="d">'+esc(r.note)+(r.right?' · Coste '+r.right+' monedas':'')+'</span></div>';
     }).join('')+'<p class="fine">Los SBC vienen de FUTWIZ y solo traen la fecha de caducidad, sin hora. Los objetivos no se leen. EA anuncia los SBC nuevos horas antes de salir, así que no se pueden predecir.</p>';
   }
-  function renderAll(){renderMarket();renderPlan();renderHours();renderUpcoming();}
+  function renderAll(){renderMarket();renderPlan();renderRadar();renderHours();renderUpcoming();}
 
   $('coins').value=state.coins?fmt(state.coins):'';
-  $('coins').addEventListener('input',function(){state.coins=num(this.value);save();renderPlan();});
+  $('coins').addEventListener('input',function(){state.coins=num(this.value);save();renderPlan();renderRadar();});
   $('coins').addEventListener('blur',function(){this.value=state.coins?fmt(state.coins):'';});
-  $('tipo').addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;state.type=b.getAttribute('data-t');save();renderPlan();});
+  $('tipo').addEventListener('click',function(e){var b=e.target.closest('button[data-t]');if(!b)return;state.type=b.getAttribute('data-t');save();renderPlan();renderRadar();});
   $('plan').addEventListener('input',function(e){
     var k=e.target.getAttribute('data-seen');if(k===null)return;
     state.seen[k]=num(e.target.value);save();
@@ -381,6 +434,7 @@ input[type=text]:focus-visible,button:focus-visible{outline:2px solid var(--acce
       var changed=!DATA||DATA.updatedAt!==d.updatedAt;DATA=d;FAILED=false;
       if(changed){renderAll();}else{renderMarket();}
     }).catch(function(){if(!DATA){FAILED=true;renderMarket();}});
+    fetch('radar.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(x){RADAR=x;renderRadar();renderPlan();}).catch(function(){});
     fetch('sbcs.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(x){SBCS=x;renderUpcoming();}).catch(function(){});
     fetch('events.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(x){EVENTS=x;renderUpcoming();}).catch(function(){});
     fetch('history.json'+q,{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(h){HIST=h;renderHours();}).catch(function(){});
