@@ -1,0 +1,25 @@
+name: probe
+on:
+  workflow_dispatch:
+  push:
+    paths: [".github/workflows/probe.yml"]
+permissions:
+  contents: write
+concurrency:
+  group: probe
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          mkdir -p docs/debug
+          UA="mesa-fc27 personal price reader (+https://github.com/samuaces/mesa-fc27)"
+          curl -sSL -A "$UA" https://nokafut.com/robots.txt -o docs/debug/robots.txt
+          curl -sSL -A "$UA" -H "Accept-Language: en" https://nokafut.com/en/fc27/player/231866-rodri -o docs/debug/p-rodri.html -w "%{http_code} %{size_download}\n"
+          sleep 2
+          curl -sSL -A "$UA" -H "Accept-Language: en" https://nokafut.com/en/fc27/player/240638-reijnders -o docs/debug/p-reijnders.html -w "%{http_code} %{size_download}\n"
+          git config user.name "mesa-fc27 bot"; git config user.email "actions@users.noreply.github.com"
+          git add docs/debug; git commit -q -m "probe" || true
+          git pull -q --rebase origin main && git push -q origin HEAD:main
