@@ -34,8 +34,11 @@ jobs:
           git config user.name "mesa-fc27 bot"
           git config user.email "actions@users.noreply.github.com"
           END=$(( $(date +%s) + 5*3600 + 40*60 ))
+          N=0
           while true; do
             node scripts/update.mjs || echo "Lectura fallida, se conserva el dato anterior"
+            if [ $((N % 16)) -eq 0 ]; then node scripts/radar.mjs || echo "Radar fallido, se conserva el anterior"; fi
+            N=$((N+1))
             git add docs
             if ! git diff --cached --quiet; then
               git commit -q -m "Update prices"

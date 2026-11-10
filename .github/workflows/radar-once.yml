@@ -1,23 +1,23 @@
-name: refresh-once
+name: radar-once
 on:
   workflow_dispatch:
   push:
-    paths: [".github/workflows/refresh-once.yml"]
+    paths: [".github/workflows/radar-once.yml"]
 permissions:
   contents: write
 concurrency:
-  group: refresh-once
+  group: radar-once
 jobs:
   once:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: |
-          node scripts/update.mjs
+          node scripts/radar.mjs
           git config user.name "mesa-fc27 bot"; git config user.email "actions@users.noreply.github.com"
           git add docs
           git diff --cached --quiet || git commit -q -m "Update prices (one-off)"
