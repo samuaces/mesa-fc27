@@ -1,16 +1,16 @@
 {
- "updatedAt": "2026-11-15T09:08:57.289Z",
+ "updatedAt": "2026-11-15T09:24:03.028Z",
  "source": {
   "name": "NokaFut",
   "url": "https://nokafut.com/en/fc27/cheapest/",
   "platform": "consola (PS/Xbox)"
  },
  "mood": {
-  "score": 32,
+  "score": 31,
   "text": "The market is falling: lots of packs or panic selling.",
-  "upPct": 32,
+  "upPct": 31,
   "up": 467,
-  "down": 1004
+  "down": 1018
  },
  "indices": {
   "81": {
@@ -22,28 +22,28 @@
    "change24h": -0.32
   },
   "83": {
-   "value": 98.43,
+   "value": 98.78,
    "change24h": 0
   },
   "84": {
-   "value": 79.16,
-   "change24h": -14.93
+   "value": 77.7,
+   "change24h": -17.75
   },
   "85": {
-   "value": 86.09,
-   "change24h": -10.04
+   "value": 83.99,
+   "change24h": -12.27
   },
   "86": {
-   "value": 89.56,
-   "change24h": -3.97
+   "value": 89.55,
+   "change24h": -3.69
   },
   "100": {
-   "value": 90.59,
-   "change24h": -4.93
+   "value": 90.15,
+   "change24h": -5.36
   },
   "Icons": {
-   "value": 89.18,
-   "change24h": -7.2
+   "value": 88.73,
+   "change24h": -7.64
   }
  },
  "tiers": [
@@ -143,17 +143,9 @@
   },
   {
    "rating": 83,
-   "price": 650,
+   "price": 700,
    "itemScore": 410,
    "cards": [
-    {
-     "id": "246147",
-     "name": "Greenwood",
-     "pos": "RM",
-     "version": "Gold",
-     "price": 650,
-     "itemScore": 410
-    },
     {
      "id": "193080",
      "name": "De Gea",
@@ -185,6 +177,14 @@
      "version": "Gold",
      "price": 700,
      "itemScore": 410
+    },
+    {
+     "id": "204525",
+     "name": "Iñigo Martínez",
+     "pos": "CB",
+     "version": "Gold",
+     "price": 700,
+     "itemScore": 410
     }
    ]
   },
@@ -194,8 +194,16 @@
    "itemScore": 830,
    "cards": [
     {
-     "id": "231281",
-     "name": "Alexander-Arnold",
+     "id": "242896",
+     "name": "Engen",
+     "pos": "CB",
+     "version": "Gold",
+     "price": 700,
+     "itemScore": 830
+    },
+    {
+     "id": "251805",
+     "name": "Timber",
      "pos": "RB",
      "version": "Gold",
      "price": 700,
@@ -206,123 +214,115 @@
      "name": "Lewandowski",
      "pos": "ST",
      "version": "Gold",
+     "price": 750,
+     "itemScore": 830
+    },
+    {
+     "id": "210676",
+     "name": "Falcone",
+     "pos": "GK",
+     "version": "Gold",
      "price": 800,
      "itemScore": 830
     },
     {
-     "id": "237692",
-     "name": "Foden",
-     "pos": "CAM",
+     "id": "222077",
+     "name": "Locatelli",
+     "pos": "CDM",
      "version": "Gold",
-     "price": 850,
-     "itemScore": 830
-    },
-    {
-     "id": "238074",
-     "name": "James",
-     "pos": "RB",
-     "version": "Gold",
-     "price": 850,
-     "itemScore": 830
-    },
-    {
-     "id": "239837",
-     "name": "Mac Allister",
-     "pos": "CM",
-     "version": "Gold",
-     "price": 850,
+     "price": 800,
      "itemScore": 830
     }
    ]
   },
   {
    "rating": 85,
-   "price": 1900,
+   "price": 2000,
    "itemScore": 2100,
    "cards": [
     {
-     "id": "244176",
-     "name": "Undav",
-     "pos": "ST",
+     "id": "227095",
+     "name": "Giugliano",
+     "pos": "CM",
      "version": "Gold",
-     "price": 1900,
+     "price": 2000,
      "itemScore": 2100
     },
     {
-     "id": "230872",
-     "name": "Svilar",
-     "pos": "GK",
+     "id": "245882",
+     "name": "Cuthbert",
+     "pos": "CDM",
      "version": "Gold",
      "price": 2100,
      "itemScore": 2100
     },
     {
-     "id": "241096",
-     "name": "Tonali",
-     "pos": "CDM",
-     "version": "Gold",
-     "price": 2300,
-     "itemScore": 2100
-    },
-    {
-     "id": "50534459",
-     "name": "Martínez",
+     "id": "204935",
+     "name": "Pickford",
      "pos": "GK",
      "version": "Gold",
+     "price": 2200,
+     "itemScore": 2100
+    },
+    {
+     "id": "216393",
+     "name": "Tielemans",
+     "pos": "CM",
+     "version": "Gold",
      "price": 2300,
      "itemScore": 2100
     },
     {
-     "id": "177003",
-     "name": "Modrić",
-     "pos": "CM",
+     "id": "232293",
+     "name": "Osimhen",
+     "pos": "ST",
      "version": "Gold",
-     "price": 2400,
+     "price": 2300,
      "itemScore": 2100
     }
    ]
   },
   {
    "rating": 86,
-   "price": 3600,
+   "price": 4600,
    "itemScore": 4100,
    "cards": [
     {
-     "id": "252154",
-     "name": "Carnesecchi",
-     "pos": "GK",
-     "version": "Gold",
-     "price": 3600,
-     "itemScore": 4100
-    },
-    {
-     "id": "237238",
-     "name": "McTominay",
-     "pos": "CM",
-     "version": "Gold",
-     "price": 4500,
-     "itemScore": 4100
-    },
-    {
-     "id": "50578738",
-     "name": "Fernández",
+     "id": "226271",
+     "name": "Fabián Ruiz",
      "pos": "CM",
      "version": "Gold",
      "price": 4600,
      "itemScore": 4100
     },
     {
-     "id": "226268",
-     "name": "Dimarco",
+     "id": "252154",
+     "name": "Carnesecchi",
+     "pos": "GK",
+     "version": "Gold",
+     "price": 4600,
+     "itemScore": 4100
+    },
+    {
+     "id": "265239",
+     "name": "McCabe",
+     "pos": "LB",
+     "version": "Gold",
+     "price": 4600,
+     "itemScore": 4100
+    },
+    {
+     "id": "227323",
+     "name": "Reiten",
      "pos": "LB",
      "version": "Gold",
      "price": 4700,
      "itemScore": 4100
     },
     {
-     "id": "234577",
-     "name": "Diogo Costa",
-     "pos": "GK",
+     "id": "237238",
+     "name": "McTominay",
+     "pos": "CM",
      "version": "Gold",
      "price": 4700,
      "itemScore": 4100
@@ -331,31 +331,15 @@
   },
   {
    "rating": 87,
-   "price": 6200,
+   "price": 6300,
    "itemScore": 5500,
    "cards": [
-    {
-     "id": "209331",
-     "name": "Salah",
-     "pos": "RM",
-     "version": "Gold",
-     "price": 6200,
-     "itemScore": 5500
-    },
     {
      "id": "257008",
      "name": "Hemp",
      "pos": "LM",
      "version": "Gold",
-     "price": 6600,
-     "itemScore": 5500
-    },
-    {
-     "id": "207865",
-     "name": "Marquinhos",
-     "pos": "CB",
-     "version": "Gold",
-     "price": 6700,
+     "price": 6300,
      "itemScore": 5500
     },
     {
@@ -363,52 +347,60 @@
      "name": "Irene Paredes",
      "pos": "CB",
      "version": "Gold",
-     "price": 6700,
+     "price": 6500,
      "itemScore": 5500
     },
     {
-     "id": "227361",
-     "name": "Diani",
-     "pos": "RM",
+     "id": "232075",
+     "name": "Lavelle",
+     "pos": "CAM",
      "version": "Gold",
-     "price": 6700,
+     "price": 6500,
+     "itemScore": 5500
+    },
+    {
+     "id": "213331",
+     "name": "Tah",
+     "pos": "CB",
+     "version": "Gold",
+     "price": 6600,
+     "itemScore": 5500
+    },
+    {
+     "id": "253436",
+     "name": "Ona Batlle",
+     "pos": "RB",
+     "version": "Gold",
+     "price": 6600,
      "itemScore": 5500
     }
    ]
   },
   {
    "rating": 88,
-   "price": 10750,
+   "price": 11500,
    "itemScore": 8300,
    "cards": [
-    {
-     "id": "236479",
-     "name": "Mapi León",
-     "pos": "CB",
-     "version": "Gold",
-     "price": 10750,
-     "itemScore": 8300
-    },
-    {
-     "id": "200389",
-     "name": "Oblak",
-     "pos": "GK",
-     "version": "Gold",
-     "price": 11750,
-     "itemScore": 8300
-    },
     {
      "id": "241084",
      "name": "Díaz",
      "pos": "LM",
      "version": "Gold",
+     "price": 11500,
+     "itemScore": 8300
+    },
+    {
+     "id": "234378",
+     "name": "Rice",
+     "pos": "CDM",
+     "version": "Gold",
      "price": 11750,
      "itemScore": 8300
     },
     {
-     "id": "245830",
-     "name": "Hasegawa",
-     "pos": "CDM",
+     "id": "236479",
+     "name": "Mapi León",
+     "pos": "CB",
      "version": "Gold",
      "price": 11750,
      "itemScore": 8300
@@ -420,34 +412,42 @@
      "version": "Gold",
      "price": 11750,
      "itemScore": 8300
+    },
+    {
+     "id": "258980",
+     "name": "Russo",
+     "pos": "ST",
+     "version": "Gold",
+     "price": 11750,
+     "itemScore": 8300
     }
    ]
   },
   {
    "rating": 89,
-   "price": 17250,
+   "price": 18000,
    "itemScore": 11000,
    "cards": [
-    {
-     "id": "237288",
-     "name": "Mariona",
-     "pos": "CM",
-     "version": "Gold",
-     "price": 17250,
-     "itemScore": 11000
-    },
     {
      "id": "158023",
      "name": "Messi",
      "pos": "CAM",
      "version": "Gold",
-     "price": 19000,
+     "price": 18000,
      "itemScore": 11000
     },
     {
      "id": "230621",
      "name": "Donnarumma",
      "pos": "GK",
+     "version": "Gold",
+     "price": 18750,
+     "itemScore": 11000
+    },
+    {
+     "id": "279799",
+     "name": "Chawinga",
+     "pos": "LM",
      "version": "Gold",
      "price": 19000,
      "itemScore": 11000
@@ -472,23 +472,23 @@
   },
   {
    "rating": 90,
-   "price": 31250,
+   "price": 31000,
    "itemScore": 14000,
    "cards": [
-    {
-     "id": "255253",
-     "name": "Vitinha",
-     "pos": "CM",
-     "version": "Gold",
-     "price": 31250,
-     "itemScore": 14000
-    },
     {
      "id": "231866",
      "name": "Rodri",
      "pos": "CDM",
      "version": "Gold",
-     "price": 31500,
+     "price": 31000,
+     "itemScore": 14000
+    },
+    {
+     "id": "255253",
+     "name": "Vitinha",
+     "pos": "CM",
+     "version": "Gold",
+     "price": 31000,
      "itemScore": 14000
     },
     {
@@ -496,7 +496,7 @@
      "name": "Kane",
      "pos": "ST",
      "version": "Gold",
-     "price": 32000,
+     "price": 31250,
      "itemScore": 14000
     },
     {
@@ -504,7 +504,7 @@
      "name": "Shaw",
      "pos": "ST",
      "version": "Gold",
-     "price": 32500,
+     "price": 33000,
      "itemScore": 14000
     },
     {
@@ -512,7 +512,7 @@
      "name": "Courtois",
      "pos": "GK",
      "version": "Gold",
-     "price": 34500,
+     "price": 33500,
      "itemScore": 14000
     }
    ]
@@ -535,7 +535,7 @@
      "name": "Shaw",
      "pos": "ST",
      "version": "Team of the Week",
-     "price": 62500,
+     "price": 61000,
      "itemScore": 23750
     },
     {
@@ -543,7 +543,7 @@
      "name": "Shaw",
      "pos": "ST",
      "version": "Team of the Week",
-     "price": 197000,
+     "price": 198000,
      "itemScore": 35625
     },
     {
@@ -551,7 +551,7 @@
      "name": "Alexia Putellas",
      "pos": "CM",
      "version": "Gold",
-     "price": 475000,
+     "price": 479000,
      "itemScore": 19000
     }
    ]
